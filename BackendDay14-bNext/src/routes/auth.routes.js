@@ -62,4 +62,46 @@ router.get("/user",async (req,res)=>{
     }
 })
 
+router.post('/login',async(req,res)=>{
+    const {username,password} = req.body
+
+    const isUserValid = await userModel.findOne({
+        username
+    })
+    
+    if(!isUserValid){
+        return res.status(401).json({
+            message:"invalid username"
+        })
+    }
+
+    const  isPasswordValid = password === isUserValid.password
+
+    if(!isPasswordValid){
+        return  res.status(401).json({
+            message:"invalid  password"
+        })
+    }
+
+    const  token  = jsonweb.sign({
+        id: isUserValid._id
+    },process.env.JWT_SECRET)
+
+    res.cookie('token',token,{
+        expires: new Date(Date.now()+1000*60*60*24*7)
+    })
+
+    res.status(200).json({
+        message:"Login successfully",
+        isUserValid
+    })
+})
+
+router.get('/logout',async(req,res)=>{
+    req.clearCookie('token');
+    res.status(200).json({
+        message:"User Logout Successfully ! "
+        
+    })
+})
 module.exports= router
